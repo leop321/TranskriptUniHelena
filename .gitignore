@@ -1,0 +1,40 @@
+# KI-Modelle (zu groß für GitHub)
+models/whisper/*
+models/llm/*
+!models/whisper/.gitkeep
+!models/llm/.gitkeep
+
+# Persönliche Daten (Vorlesungsaufnahmen, Transkripte)
+data/audio/*
+data/transcripts/*
+data/summaries/*
+data/library/*
+data/vector_db/*
+data/app.db
+!data/audio/.gitkeep
+!data/transcripts/.gitkeep
+!data/summaries/.gitkeep
+!data/library/.gitkeep
+!data/vector_db/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user

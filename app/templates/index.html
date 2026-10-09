@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Kalender – TranskriptUni{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+
+<!-- ── Kalender-Karte ── -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <div class="calendar-header">
+    <button id="cal-prev" class="cal-nav-btn" title="Zurück">←</button>
+    <div style="text-align:center;flex:1;">
+      <h2 id="cal-title">Lädt…</h2>
+      <button id="view-toggle-btn" class="btn btn-ghost btn-sm" style="margin-top:0.3rem;font-size:0.75rem;">
+        Monatsansicht
+      </button>
+    </div>
+    <button id="cal-next" class="cal-nav-btn" title="Vor">→</button>
+  </div>
+
+  <!-- Kalender-Grid (Wochen- oder Monatsansicht) -->
+  <div id="cal-grid" class="week-grid"></div>
+</div>
+
+<!-- ── Legende: Fächer-Farben ── -->
+{% if subjects %}
+<div class="card" style="margin-bottom:5rem;">
+  <div class="card-title">Fächer</div>
+  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+    {% for s in subjects %}
+    <span style="display:inline-flex;align-items:center;gap:6px;
+                 padding:0.3rem 0.75rem;border-radius:30px;
+                 background:{{ s.color }}22;border:1px solid {{ s.color }}55;
+                 font-size:0.82rem;color:{{ s.color }};">
+      <span style="width:8px;height:8px;border-radius:50%;background:{{ s.color }};"></span>
+      {{ s.name }}
+    </span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- FAB – Floating Action Button -->
+<div class="fab-container">
+  <!-- Optionen (ausgeblendet bis Klick) -->
+  <div id="fab-options" class="fab-options" style="display:none;">
+    <button id="btn-record" class="fab-option">
+      <span class="icon">🎙️</span> Direkt aufnehmen
+    </button>
+    <button id="btn-upload" class="fab-option">
+      <span class="icon">📁</span> Datei hochladen
+    </button>
+  </div>
+  <!-- Haupt-FAB -->
+  <button id="fab-main" class="fab-main" title="Neue Aufnahme">
+    <span id="fab-icon">+</span>
+  </button>
+</div>
+
+<!-- ══ AUFNAHME-MODAL ══════════════════════════════════════════════ -->
+<div id="record-modal" class="modal-backdrop hidden">
+  <div class="modal" style="position:relative;">
+    <button id="record-modal-close" class="modal-close">✕</button>
+    <div class="modal-title">🎙️ Aufnahme starten</div>
+
+    <div class="form-group">
+      <label class="form-label">Titel der Vorlesung</label>
+      <input id="rec-title" type="text" class="form-input" placeholder="z. B. Anatomie – Herz">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Fach</label>
+      <select id="rec-subject" class="form-input">
+        <option value="">— Ohne Fach —</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Max. Aufnahmedauer (Minuten)</label>
+      <input id="rec-max-duration" type="number" class="form-input" value="90" min="1" max="180">
+    </div>
+
+    <!-- Timer & Visualizer -->
+    <div id="rec-timer" class="rec-timer">90:00</div>
+    <div id="rec-visualizer" class="rec-visualizer">
+      {% for i in range(16) %}<div class="rec-bar"></div>{% endfor %}
+    </div>
+
+    <button id="rec-start-btn" class="btn btn-primary btn-full">▶ Aufnahme starten</button>
+    <button id="rec-stop-btn" class="btn btn-danger btn-full hidden" style="margin-top:0.5rem;">■ Stopp & Speichern</button>
+  </div>
+</div>
+
+<!-- ══ UPLOAD-MODAL ════════════════════════════════════════════════ -->
+<div id="upload-modal" class="modal-backdrop hidden">
+  <div class="modal" style="position:relative;">
+    <button id="upload-modal-close" class="modal-close">✕</button>
+    <div class="modal-title">📁 Audiodatei hochladen</div>
+
+    <form id="upload-form">
+      <!-- Drag & Drop Zone -->
+      <div id="upload-zone" class="upload-zone" style="margin-bottom:1rem;">
+        <div class="upload-icon">🎵</div>
+        <p>Datei hierher ziehen oder <strong>klicken</strong></p>
+        <p style="font-size:0.75rem;margin-top:0.25rem;">MP3, WAV, M4A, OGG, WEBM</p>
+      </div>
+      <input id="upload-file-input" type="file" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm" style="display:none;">
+      <p id="upload-filename" style="font-size:0.8rem;color:var(--accent);margin-bottom:0.75rem;"></p>
+
+      <div class="form-group">
+        <label class="form-label">Titel</label>
+        <input id="upload-title" type="text" class="form-input" placeholder="z. B. Biochemie – Enzymkinetik">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Fach</label>
+        <select id="upload-subject" class="form-input">
+          <option value="">— Ohne Fach —</option>
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Datum der Vorlesung</label>
+        <input id="upload-date" type="datetime-local" class="form-input">
+      </div>
+
+      <button type="button" id="upload-submit" class="btn btn-primary btn-full">Hochladen</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══ TAG-DETAIL-MODAL ════════════════════════════════════════════ -->
+<div id="day-modal" class="modal-backdrop hidden" style="align-items:center;">
+  <div class="modal" style="border-radius:var(--radius);max-width:440px;position:relative;">
+    <button id="day-modal-close" class="modal-close">✕</button>
+    <div id="day-modal-title" class="modal-title"></div>
+    <div id="day-modal-list"></div>
+  </div>
+</div>
+
+<script src="/static/js/calendar.js"></script>
+<script src="/static/js/recorder.js"></script>
+<script>
+  // Datum-Picker auf heute vorsetzen
+  const di = document.getElementById("upload-date");
+  if (di) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    di.value = now.toISOString().slice(0,16);
+  }
+</script>
+{% endblock %}

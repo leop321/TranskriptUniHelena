@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Zusammenfassungen – TranskriptUni{% endblock %}
+{% block nav_summaries %}active{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+  <h1 style="font-size:1.3rem;font-weight:700;">Zusammenfassungen</h1>
+  <a href="/settings" class="btn btn-ghost btn-sm">+ Fach hinzufügen</a>
+</div>
+
+<!-- ── Fächer-Akkordeons ── -->
+{% for s in subjects_data %}
+<div class="subject-block" id="subject-block-{{ s.id }}">
+  <div class="subject-header" onclick="toggleAccordion({{ s.id }})">
+    <div class="subject-color-bar" style="background:{{ s.color }};"></div>
+    <span class="subject-name">{{ s.name }}</span>
+    <span class="subject-count">{{ s.recordings|length }} Einheit{{ "en" if s.recordings|length != 1 else "" }}</span>
+    <span class="subject-chevron">▶</span>
+  </div>
+
+  <div class="subject-recordings">
+    {% if s.recordings %}
+      {% for r in s.recordings %}
+      <div class="rec-item">
+        <span class="rec-dot" style="background:{{ s.color }};"></span>
+        <div style="flex:1;min-width:0;">
+          <div class="rec-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {{ r.title }}
+          </div>
+          <div class="rec-date">
+            {% if r.recorded_at %}
+              {{ r.recorded_at[:10] }}
+            {% endif %}
+          </div>
+        </div>
+        <span class="rec-status status-{{ r.status }}">{{ r.status }}</span>
+        <button class="btn btn-ghost btn-sm" onclick="playAudio({{ r.id }}, '{{ r.title|replace("'", "\\'") }}')" title="Anhören">▶</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportPDF({{ r.id }})" title="PDF exportieren">⬇</button>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--text-muted);font-size:0.85rem;padding:0.75rem 0.5rem;">
+        Noch keine Aufnahmen für dieses Fach.
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+<!-- ── Ohne Fach ── -->
+{% if unassigned %}
+<div class="subject-block" id="subject-block-unassigned">
+  <div class="subject-header" onclick="toggleAccordion('unassigned')">
+    <div class="subject-color-bar" style="background:var(--text-muted);"></div>
+    <span class="subject-name" style="color:var(--text-muted);">Ohne Fach</span>
+    <span class="subject-count">{{ unassigned|length }} Einheit{{ "en" if unassigned|length != 1 else "" }}</span>
+    <span class="subject-chevron">▶</span>
+  </div>
+  <div class="subject-recordings">
+    {% for r in unassigned %}
+    <div class="rec-item">
+      <span class="rec-dot" style="background:var(--text-muted);"></span>
+      <div style="flex:1;min-width:0;">
+        <div class="rec-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.title }}</div>
+        <div class="rec-date">{% if r.recorded_at %}{{ r.recorded_at[:10] }}{% endif %}</div>
+      </div>
+      <span class="rec-status status-{{ r.status }}">{{ r.status }}</span>
+      <button class="btn btn-ghost btn-sm" onclick="playAudio({{ r.id }}, '{{ r.title|replace("'", "\\'") }}')" title="Anhören">▶</button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if not subjects_data and not unassigned %}
+<div class="card" style="text-align:center;padding:3rem 1rem;">
+  <div style="font-size:3rem;margin-bottom:0.75rem;">📭</div>
+  <p style="color:var(--text-muted);">Noch keine Aufnahmen vorhanden.<br>Starte mit dem <strong>+</strong>-Knopf auf der Startseite.</p>
+  <a href="/" class="btn btn-primary" style="margin-top:1rem;display:inline-flex;">Zur Startseite</a>
+</div>
+{% endif %}
+
+<!-- Etwas Abstand am unteren Rand -->
+<div style="height:2rem;"></div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function toggleAccordion(id) {
+    const block = document.getElementById("subject-block-" + id);
+    if (!block) return;
+    block.classList.toggle("open");
+  }
+
+  function exportPDF(id) {
+    // Platzhalter – wird in einem späteren Schritt mit der KI-Pipeline verbunden
+    window.showToast("PDF-Export wird in Kürze verfügbar sein ✦", "");
+  }
+</script>
+{% endblock %}

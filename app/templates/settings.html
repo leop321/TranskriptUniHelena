@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Einstellungen – TranskriptUni{% endblock %}
+{% block nav_settings %}active{% endblock %}
+
+{% block content %}
+
+<h1 style="font-size:1.3rem;font-weight:700;margin-bottom:1.25rem;">Einstellungen</h1>
+
+<!-- ── Fächer verwalten ── -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <div class="card-title">Fächer</div>
+
+  <div id="subjects-list">
+    {% for s in subjects %}
+    <div class="subject-row" id="srow-{{ s.id }}">
+      <div class="subject-row__color" style="background:{{ s.color }};"></div>
+      <span class="subject-row__name">{{ s.name }}{% if s.abbreviation %} <span style="color:var(--text-muted);font-size:0.8rem;">({{ s.abbreviation }})</span>{% endif %}</span>
+      <button class="btn btn-ghost btn-sm" onclick="openEditSubject({{ s.id }}, '{{ s.name|replace("'","\\'") }}', '{{ s.color }}', '{{ s.abbreviation|replace("'","\\'") }}')">✏️ Bearbeiten</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSubject({{ s.id }}, '{{ s.name|replace("'","\\'") }}')">🗑</button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button class="btn btn-primary" style="margin-top:1rem;" onclick="openNewSubject()">+ Neues Fach</button>
+</div>
+
+<!-- ── Über das Projekt ── -->
+<div class="card">
+  <div class="card-title">System-Info</div>
+  <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+    <p>🧠 <strong>KI-Status:</strong> <span style="color:#eab308;">Noch nicht installiert (Web-Interface Phase)</span></p>
+    <p>📁 <strong>Modell-Ordner:</strong> <code style="font-size:0.8rem;">models/whisper/</code> und <code style="font-size:0.8rem;">models/llm/</code></p>
+    <p>🔒 <strong>Datenschutz:</strong> Alle Daten bleiben lokal auf diesem Gerät.</p>
+  </div>
+</div>
+
+<!-- ══ MODAL: Fach erstellen / bearbeiten ══════════════════════════ -->
+<div id="subject-modal" class="modal-backdrop hidden" style="align-items:center;">
+  <div class="modal" style="border-radius:var(--radius);max-width:420px;position:relative;">
+    <button onclick="closeSubjectModal()" class="modal-close">✕</button>
+    <div id="subject-modal-title" class="modal-title">Neues Fach</div>
+
+    <input type="hidden" id="edit-subject-id" value="">
+
+    <div class="form-group">
+      <label class="form-label">Name des Fachs</label>
+      <input id="edit-name" type="text" class="form-input" placeholder="z. B. Anatomie">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Abkürzung (optional)</label>
+      <input id="edit-abbr" type="text" class="form-input" placeholder="z. B. Ana" maxlength="10">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Farbe</label>
+      <div class="color-row">
+        <input type="color" id="edit-color-picker" value="#6366f1" class="color-swatch" style="padding:0;border:none;width:40px;height:40px;border-radius:50%;overflow:hidden;">
+        <span id="edit-color-preview"
+              style="width:36px;height:36px;border-radius:50%;background:#6366f1;border:2px solid var(--border);">
+        </span>
+        <span id="edit-color-hex" style="font-size:0.85rem;color:var(--text-muted);">#6366f1</span>
+      </div>
+      <!-- Vorschläge -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:0.75rem;">
+        {% set colors = ["#ef4444","#f97316","#eab308","#22c55e","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#94a3b8","#f8fafc"] %}
+        {% for c in colors %}
+        <button type="button"
+                onclick="setColor('{{ c }}')"
+                style="width:26px;height:26px;border-radius:50%;background:{{ c }};border:2px solid transparent;cursor:pointer;"
+                title="{{ c }}">
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.5rem;margin-top:0.25rem;">
+      <button onclick="closeSubjectModal()" class="btn btn-ghost" style="flex:1;">Abbrechen</button>
+      <button onclick="saveSubject()" class="btn btn-primary" style="flex:1;">Speichern</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // ── Farb-Picker ──────────────────────────────────────────────────────
+  document.getElementById("edit-color-picker").addEventListener("input", e => setColor(e.target.value));
+
+  function setColor(hex) {
+    document.getElementById("edit-color-picker").value = hex;
+    document.getElementById("edit-color-preview").style.background = hex;
+    document.getElementById("edit-color-hex").textContent = hex;
+  }
+
+  // ── Modal öffnen / schließen ─────────────────────────────────────────
+  function openNewSubject() {
+    document.getElementById("edit-subject-id").value = "";
+    document.getElementById("edit-name").value = "";
+    document.getElementById("edit-abbr").value = "";
+    setColor("#6366f1");
+    document.getElementById("subject-modal-title").textContent = "Neues Fach";
+    document.getElementById("subject-modal").classList.remove("hidden");
+  }
+
+  function openEditSubject(id, name, color, abbr) {
+    document.getElementById("edit-subject-id").value = id;
+    document.getElementById("edit-name").value = name;
+    document.getElementById("edit-abbr").value = abbr;
+    setColor(color);
+    document.getElementById("subject-modal-title").textContent = "Fach bearbeiten";
+    document.getElementById("subject-modal").classList.remove("hidden");
+  }
+
+  function closeSubjectModal() {
+    document.getElementById("subject-modal").classList.add("hidden");
+  }
+
+  document.getElementById("subject-modal").addEventListener("click", function(e) {
+    if (e.target === this) closeSubjectModal();
+  });
+
+  // ── Speichern ────────────────────────────────────────────────────────
+  async function saveSubject() {
+    const id    = document.getElementById("edit-subject-id").value;
+    const name  = document.getElementById("edit-name").value.trim();
+    const abbr  = document.getElementById("edit-abbr").value.trim();
+    const color = document.getElementById("edit-color-picker").value;
+
+    if (!name) { window.showToast("Bitte einen Namen eingeben.", "error"); return; }
+
+    const fd = new FormData();
+    fd.append("name", name);
+    fd.append("color", color);
+    fd.append("abbreviation", abbr);
+
+    try {
+      const url    = id ? `/api/subjects/${id}` : "/api/subjects";
+      const method = id ? "PUT" : "POST";
+      const res = await fetch(url, { method, body: fd });
+      if (!res.ok) throw new Error(await res.text());
+      window.showToast(id ? "Fach aktualisiert ✓" : "Fach erstellt ✓", "success");
+      closeSubjectModal();
+      setTimeout(() => location.reload(), 600);
+    } catch (e) {
+      window.showToast("Fehler: " + e.message, "error");
+    }
+  }
+
+  // ── Löschen ──────────────────────────────────────────────────────────
+  async function deleteSubject(id, name) {
+    if (!confirm(`Fach "${name}" wirklich löschen? Alle zugeordneten Aufnahmen verlieren ihre Fachzuordnung.`)) return;
+    try {
+      const res = await fetch(`/api/subjects/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await res.text());
+      window.showToast(`"${name}" gelöscht.`, "");
+      document.getElementById(`srow-${id}`)?.remove();
+    } catch (e) {
+      window.showToast("Fehler: " + e.message, "error");
+    }
+  }
+</script>
+{% endblock %}

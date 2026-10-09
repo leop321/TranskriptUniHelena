@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1117">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>{% block title %}TranskriptUni{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── Navigationsleiste ── -->
+  <nav class="navbar">
+    <div class="navbar__logo">
+      🎓 <span>Transkript</span>Uni
+    </div>
+    <div class="navbar__nav">
+      <a href="/"           class="{% block nav_home %}{% endblock %}">Kalender</a>
+      <a href="/summaries"  class="{% block nav_summaries %}{% endblock %}">Zusammenfassungen</a>
+      <a href="/settings"   class="{% block nav_settings %}{% endblock %}">Einstellungen</a>
+    </div>
+  </nav>
+
+  <!-- ── Seiteninhalt ── -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+<!-- ── Toast-Container ── -->
+<div id="toast-container"></div>
+
+<!-- ── Audio-Player Modal ── -->
+<div id="player-modal" class="modal-backdrop hidden" style="align-items:center;">
+  <div class="modal" style="border-radius:var(--radius);max-width:420px;">
+    <div style="position:relative;margin-bottom:1rem;">
+      <div class="modal-title" id="player-title">Aufnahme</div>
+      <button id="player-modal-close" class="modal-close">✕</button>
+    </div>
+    <audio id="audio-player" controls style="width:100%;border-radius:8px;"></audio>
+  </div>
+</div>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>
